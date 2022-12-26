@@ -1,0 +1,109 @@
+import cv2
+import numpy as np
+import os
+from random import shuffle
+import pandas as pd
+import csv
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import tflearn
+from tflearn.layers.conv import conv_2d, max_pool_2d
+from tflearn.layers.core import input_data, dropout, fully_connected
+from tflearn.layers.estimator import regression
+
+IMG_SIZE=200
+
+path=".\Dataset\personC"
+encoded={"forged":np.array([0,1]),"real":np.array([1,0])}
+
+
+train_images=[]
+test_images=[]
+csv_train=''
+csv_test=''
+for folder in os.listdir(path):
+    for file in os.listdir(os.path.join(path,folder)):
+        if(folder=="Train" and file.__contains__(".png")):
+            train_images.append(os.path.join(path,folder,file))
+        elif(folder=="Test" and file.__contains__(".png")):
+            test_images.append(os.path.join(path, folder,file))
+        elif (folder == "Test" and file.__contains__(".csv")):
+            csv_test=os.path.join(path, folder,file)
+        elif (folder == "Train" and file.__contains__(".csv")):
+            csv_train=os.path.join(path, folder,file)
+
+train_pd=pd.read_csv(csv_train)
+test_pd=pd.read_csv(csv_test)
+
+train_dic={}
+for ind in train_pd.index:
+    train_dic[train_pd['image_name'][ind]]=train_pd['label'][ind]
+
+train_labels=[]
+for image in train_images:
+    parts=os.path.split(image)
+
+    if(train_dic.__contains__(parts[-1])):
+        if(train_dic[parts[-1]]=="forged"):
+            train_labels.append(encoded["forged"])
+        elif(train_dic[parts[-1]]=="real"):
+            train_labels.append(encoded["real"])
+    else:
+        train_labels.append(encoded["forged"])
+
+training_data=[]
+for image in train_images:
+    training_data.append(cv2.resize(cv2.imread(image,0),(IMG_SIZE,IMG_SIZE)))
+# cv2.imshow("train 1",training_data[0])
+# cv2.waitKey(5000)
+
+training_data=np.array(training_data).reshape(-1,IMG_SIZE,IMG_SIZE,1)
+train_labels=np.array(train_labels).reshape(40,2)
+
+
+
+
+
+
+
+conv_input = input_data(shape=[None, IMG_SIZE, IMG_SIZE, 1], name='input')
+conv1 = conv_2d(conv_input, 128, 3,strides=1,padding='same',activation='relu')
+pool1 = max_pool_2d(conv1, 3)
+
+conv2 = conv_2d(pool1, 64, 3,strides=1,padding='same',activation='relu')
+pool2 = max_pool_2d(conv2, 3)
+
+# conv3 = conv_2d(pool2, 32, 6,strides=1,padding='same',activation='relu')
+# pool3 = max_pool_2d(conv3, 3)
+
+
+
+
+
+
+
+fully_layer1 = fully_connected(pool2, 16, activation='relu')
+fully_layer2 = fully_connected(fully_layer1, 16, activation='relu')
+
+
+cnn_layers = fully_connected(fully_layer2,2, activation='softmax')
+
+cnn_layers = regression(cnn_layers, optimizer='adam', learning_rate=0.0001, loss='categorical_crossentropy', name='targets')
+model = tflearn.DNN(cnn_layers, tensorboard_dir='log', tensorboard_verbose=3)
+
+
+
+model.fit({'input': training_data}, {'targets': train_labels}, n_epoch=30,
+     show_metric=True, run_id="stage2")
+
+# if (os.path.exists('model.tfl.meta')):
+#     model.load('./model.tfl')
+# else:
+#     model.fit({'input': X_train}, {'targets': y_train}, n_epoch=10,
+#
+#           snapshot_step=500, show_metric=True, run_id=MODEL_NAME)
+#     model.save('model.tfl')
+
+
+
+
