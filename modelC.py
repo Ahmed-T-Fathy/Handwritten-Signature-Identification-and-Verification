@@ -1,4 +1,5 @@
 import os
+import time
 
 import cv2
 
@@ -18,9 +19,14 @@ if (os.path.exists('modelC.tfl.meta')):
     model.load('./modelC.tfl')
 else:
      X_train, Y_train, X_test, Y_test = model_healpers.get_data(path, IMG_SIZE, encoded)
+     start_train = time.time()
      model.fit({'input': X_train}, {'targets': Y_train}, n_epoch=25,
                show_metric=True, run_id="stage 2 personC")
+     end_train = time.time()
      model.save('modelC.tfl')
+     print('==================================================================')
+     print("Model C", )
+     print(f"Training time: {end_train - start_train}s")
 
 
 
@@ -29,15 +35,17 @@ else:
 
 def get_accuarcy():
      # test = model.predict(X_test)
-     print('==================================================================')
+
      train_score = model.evaluate(X_train, Y_train)
+     start_test = time.time()
      test_score = model.evaluate(X_test, Y_test)
-     print("Model C",)
+     end_test = time.time()
+     print(f"Testing time: {end_test - start_test}s")
      print('train accuarcy:',train_score[0]*100,'%')
      print('test accuarcy:',test_score[0]*100,'%')
      print('==================================================================')
 
-# get_accuarcy()
+get_accuarcy()
 # img=cv2.imread("./real.png",0)
 def test_img(img):
      img=cv2.resize(img,(IMG_SIZE,IMG_SIZE))

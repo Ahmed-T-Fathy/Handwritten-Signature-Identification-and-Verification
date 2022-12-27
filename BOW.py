@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import numpy as np
 
@@ -56,19 +58,23 @@ def train_bow(train_images,encoded,NO_OF_CLUSTERS):
     scale = StandardScaler().fit(mega_histogram)
     imgs_features = scale.transform(mega_histogram)
 
-    x_scalar = np.arange(NO_OF_CLUSTERS)
-    y_scalar = np.array([abs(np.sum(imgs_features[:, h], dtype=np.int32)) for h in range(NO_OF_CLUSTERS)])
-
+    # x_scalar = np.arange(NO_OF_CLUSTERS)
+    # y_scalar = np.array([abs(np.sum(imgs_features[:, h], dtype=np.int32)) for h in range(NO_OF_CLUSTERS)])
     #
-    #
-    # plt.bar(x_scalar, y_scalar)
-    # plt.xlabel("Visual Word Index")
-    # plt.ylabel("Frequency")
-    # plt.title("Complete Vocabulary Generated")
-    # plt.xticks(x_scalar + 0.4, x_scalar)
-    # plt.show()
+    # #
+    # #
+    # # plt.bar(x_scalar, y_scalar)
+    # # plt.xlabel("Visual Word Index")
+    # # plt.ylabel("Frequency")
+    # # plt.title("Complete Vocabulary Generated")
+    # # plt.xticks(x_scalar + 0.4, x_scalar)
+    # # plt.show()
 
     svm = SVC().fit(imgs_features, trainingLabels)
+    prediction = svm.predict(imgs_features)
+    accuracy = accuracy_score(trainingLabels, prediction)
+
+    print("BOW training accuracy:", accuracy * 100, '%')
     return kmeans,scale,svm,imgs_features
 
 def test_bow(test_images,encoded,kmeans,scale,svm,NO_OF_CLUSTERS):
@@ -115,6 +121,22 @@ def test_bow(test_images,encoded,kmeans,scale,svm,NO_OF_CLUSTERS):
     accuracy=accuracy_score(testingLabels,prediction)
 
     print("BOW testing accuracy:",accuracy*100,'%')
+
+
+    # Provide screenshots of the test sets classification with visualization
+    print("image","   ","predicted label")
+    for i in range(len(testingLabels)):
+        parts = os.path.split(test_images[i])
+        val="personA"
+        if(prediction[i]==1):
+            val = "personB"
+        elif(prediction[i]==2):
+            val = "personC"
+        elif (prediction[i] == 3):
+            val = "personD"
+        elif (prediction[i] == 4):
+            val = "personE"
+        print(parts[-1],"   ",val)
 
 
 def test_script(img,svm,kmeans,scale,NO_OF_CLUSTERS):

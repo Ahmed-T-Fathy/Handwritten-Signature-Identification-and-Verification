@@ -2,6 +2,8 @@ import os
 import BOW
 import numpy as np
 import pickle
+import time
+
 NO_OF_CLUSTERS=10
 encoded={"personA":0,"personB":1,"personC":2,"personD":3,"personE":4}
 # read the data
@@ -20,8 +22,10 @@ for folder in os.listdir(path):
 
 # train the model
 # np.random.shuffle(train_images)
-kmeans,scale,svm,imgs_features=BOW.train_bow(train_images,encoded,NO_OF_CLUSTERS)
+start_train = time.time()
 
+kmeans,scale,svm,imgs_features=BOW.train_bow(train_images,encoded,NO_OF_CLUSTERS)
+end_train = time.time()
 
 svm_filename = 'svm_model.sav'
 pickle.dump(svm, open(svm_filename, 'wb'))
@@ -37,5 +41,9 @@ pickle.dump(scale, open(scale_filename, 'wb'))
 # kmeans.save("kmeans.tfl")
 # scale.save("svm.scale")
 # test the model
+start_test = time.time()
 BOW.test_bow(test_images,encoded,kmeans,scale,svm,NO_OF_CLUSTERS)
+end_test = time.time()
 
+print(f"Training time: {end_train - start_train}s")
+print(f"Testing time: {end_test - start_test}s")
